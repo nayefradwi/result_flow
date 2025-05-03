@@ -1,5 +1,5 @@
 name: safe_result
-description: A starting point for Dart libraries or applications.
+description: Provides a Result type (Result<T>) for robust error handling, encapsulating either a success value or an error. Includes helpers for safe execution and chaining.
 version: 1.0.0
 repository: https://github.com/nayefradwi/safe_result
 
