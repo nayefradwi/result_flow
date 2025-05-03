@@ -38,8 +38,20 @@ class DomainError extends ResultError {
 class ValidationError extends ResultError {
   ValidationError({required this.details})
     : super('invalid data', code: validationErrorCode);
+  ValidationError.fromField(String field)
+    : this(details: {field: ValidationErrorFields.fromField(field)});
 
   final Map<String, ValidationErrorFields> details;
+
+  void addField(String field) {
+    details[field] = ValidationErrorFields.fromField(field);
+  }
+
+  void addFields(List<String> fields) {
+    for (final field in fields) {
+      details[field] = ValidationErrorFields.fromField(field);
+    }
+  }
 
   @override
   String toString() {
