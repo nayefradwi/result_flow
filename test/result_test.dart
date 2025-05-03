@@ -1,0 +1,487 @@
+import 'package:safe_result/safe_result.dart';
+import 'package:test/test.dart';
+
+FutureResult<int> returnsFutureSuccess(int value) async {
+  await Future<void>.delayed(const Duration(milliseconds: 10));
+  return Result.success(value);
+}
+
+Result<int> returnsSuccess(int value) {
+  return Result.success(value);
+}
+
+Result<String> returnsStringSuccess(String value) {
+  return Result.success(value);
+}
+
+Result<int> returnsError(int value) {
+  return Result.error(
+    DomainError(
+      'Simulated domain error for value $value',
+      code: 'test_error_$value',
+    ),
+  );
+}
+
+Result<int> throwsException(int value) {
+  throw DomainError(
+    'Simulated exception for value $value',
+    code: 'test_error_$value',
+  );
+}
+
+void main() {
+  group('Result Chaining - Successful Execution:', () {
+    test(
+      'should execute sequential synchronous runAfter calls successfully',
+      () {
+        final sequence = <int>[];
+        final result = returnsSuccess(1)
+            .runAfter(
+              after: (data) {
+                final next = data + 1;
+                sequence.add(next);
+                return returnsSuccess(next);
+              },
+            )
+            .runAfter(
+              after: (data) {
+                final next = data + 1;
+                sequence.add(next);
+                return returnsSuccess(next);
+              },
+            )
+            .runAfter(
+              after: (data) {
+                final next = data + 1;
+                sequence.add(next);
+                return returnsSuccess(next);
+              },
+            );
+
+        expect(result.isSuccess, true);
+        expect(result.tryGetData(), 4);
+        expect(sequence, [2, 3, 4]);
+      },
+    );
+
+    test(
+      'should execute sequential asynchronous runAfterAsync calls successfully',
+      () async {
+        final sequence = <int>[];
+        final result = await returnsSuccess(1)
+            .runAfterAsync(
+              after: (data) async {
+                final next = data + 1;
+                sequence.add(next);
+                return returnsFutureSuccess(next);
+              },
+            )
+            .runAfterAsync(
+              after: (data) async {
+                final next = data + 1;
+                sequence.add(next);
+                return returnsFutureSuccess(next);
+              },
+            )
+            .runAfterAsync(
+              after: (data) async {
+                final next = data + 1;
+                sequence.add(next);
+                return returnsFutureSuccess(next);
+              },
+            );
+
+        expect(result.isSuccess, true);
+        expect(result.tryGetData(), 4);
+        expect(sequence, [2, 3, 4]);
+      },
+    );
+
+    test(
+      '''should execute mixed synchronous and asynchronous runAfter calls successfully''',
+      () async {
+        final sequence = <int>[];
+        final result = await returnsFutureSuccess(1)
+            .runAfter(
+              after: (data) {
+                final next = data + 1;
+                sequence.add(next);
+                return returnsSuccess(next);
+              },
+            )
+            .runAfterAsync(
+              after: (data) async {
+                final next = data + 1;
+                sequence.add(next);
+                return returnsFutureSuccess(next);
+              },
+            )
+            .runAfter(
+              after: (data) {
+                final next = data + 1;
+                sequence.add(next);
+                return returnsSuccess(next);
+              },
+            );
+
+        expect(result.isSuccess, true);
+        expect(result.tryGetData(), 4);
+        expect(sequence, [2, 3, 4]);
+      },
+    );
+  });
+
+  group('Result Chaining - Error Propagation:', () {
+    test(
+      'should stop chain execution when a step returns Result.error',
+      () async {
+        final sequence = <int>[];
+
+        var resultSync = returnsSuccess(1)
+            .runAfter(
+              after: (data) {
+                final next = data + 1;
+                sequence.add(next);
+                return returnsError(next);
+              },
+            )
+            .runAfter(
+              after: (data) {
+                final next = data + 1;
+                sequence.add(99);
+                return returnsSuccess(next);
+              },
+            );
+
+        expect(
+          resultSync.isError,
+          true,
+          reason: 'Sync chain should be error after first step',
+        );
+        expect(
+          sequence,
+          [2],
+          reason: '''Sync chain sequence should only have first step''',
+        );
+        expect(
+          resultSync.tryGetError(),
+          isA<DomainError>(),
+          reason: 'Sync chain error type mismatch',
+        );
+        expect(
+          (resultSync.tryGetError()! as DomainError).code,
+          'test_error_2',
+          reason: 'Sync chain error code mismatch',
+        );
+        expect(
+          resultSync.tryGetData(),
+          null,
+          reason: 'Sync chain data should be null',
+        );
+
+        sequence.clear();
+        resultSync = returnsSuccess(1)
+            .runAfter(
+              after: (data) {
+                final next = data + 1;
+                sequence.add(next);
+                return returnsSuccess(next);
+              },
+            )
+            .runAfter(
+              after: (data) {
+                final next = data + 1;
+                sequence.add(next);
+                return returnsError(next);
+              },
+            )
+            .runAfter(
+              after: (data) {
+                final next = data + 1;
+                sequence.add(99);
+                return returnsSuccess(next);
+              },
+            );
+
+        expect(
+          resultSync.isError,
+          true,
+          reason: 'Sync chain should be error after second step',
+        );
+        expect(
+          sequence,
+          [2, 3],
+          reason: '''Sync chain sequence should have first two steps''',
+        );
+        expect(
+          resultSync.tryGetError(),
+          isA<DomainError>(),
+          reason: 'Sync chain error type mismatch',
+        );
+        expect(
+          (resultSync.tryGetError()! as DomainError).code,
+          'test_error_3',
+          reason: 'Sync chain error code mismatch',
+        );
+        expect(
+          resultSync.tryGetData(),
+          null,
+          reason: 'Sync chain data should be null',
+        );
+
+        sequence.clear();
+        final resultMixed = await returnsFutureSuccess(1)
+            .runAfterAsync(
+              after: (data) async {
+                final next = data + 1;
+                sequence.add(next);
+                return returnsFutureSuccess(next);
+              },
+            )
+            .runAfter(
+              after: (data) {
+                final next = data + 1;
+                sequence.add(next);
+                return returnsError(next);
+              },
+            )
+            .runAfterAsync(
+              after: (data) async {
+                final next = data + 1;
+                sequence.add(99);
+                return returnsFutureSuccess(next);
+              },
+            );
+
+        expect(
+          resultMixed.isError,
+          true,
+          reason: 'Mixed chain should be error after sync step',
+        );
+        expect(
+          sequence,
+          [2, 3],
+          reason: '''Mixed chain sequence should have first two steps''',
+        );
+        expect(
+          resultMixed.tryGetError(),
+          isA<DomainError>(),
+          reason: 'Mixed chain error type mismatch',
+        );
+        expect(
+          (resultMixed.tryGetError()! as DomainError).code,
+          'test_error_3',
+          reason: 'Mixed chain error code mismatch',
+        );
+        expect(
+          resultMixed.tryGetData(),
+          null,
+          reason: 'Mixed chain data should be null',
+        );
+      },
+    );
+  });
+
+  group('Result Chaining - Exception Handling:', () {
+    test(
+      '''should stop chain and return Result.error when a step throws an exception''',
+      () async {
+        final sequence = <int>[];
+
+        var resultSync = returnsSuccess(1)
+            .runAfter(
+              after: (data) {
+                final next = data + 1;
+                sequence.add(next);
+                return throwsException(next);
+              },
+            )
+            .runAfter(
+              after: (data) {
+                final next = data + 1;
+                sequence.add(99);
+                return returnsSuccess(next);
+              },
+            );
+
+        expect(
+          resultSync.isError,
+          true,
+          reason: 'Sync chain should be error after exception in first step',
+        );
+        expect(
+          sequence,
+          [2],
+          reason: 'Sync chain sequence should only have first step (exception)',
+        );
+        expect(
+          resultSync.tryGetError(),
+          isA<DomainError>(),
+          reason: 'Sync chain error type mismatch (exception)',
+        );
+        expect(
+          resultSync.tryGetError()?.message,
+          'Simulated exception for value 2',
+          reason: 'Sync chain error message mismatch (exception)',
+        );
+        expect(
+          resultSync.tryGetError()?.code,
+          'test_error_2',
+          reason: 'Sync chain error code mismatch (exception)',
+        );
+        expect(
+          resultSync.tryGetData(),
+          null,
+          reason: 'Sync chain data should be null (exception)',
+        );
+
+        sequence.clear();
+        resultSync = returnsSuccess(1)
+            .runAfter(
+              after: (data) {
+                final next = data + 1;
+                sequence.add(next);
+                return returnsSuccess(next);
+              },
+            )
+            .runAfter(
+              after: (data) {
+                final next = data + 1;
+                sequence.add(next);
+                return throwsException(next);
+              },
+            )
+            .runAfter(
+              after: (data) {
+                final next = data + 1;
+                sequence.add(99);
+                return returnsSuccess(next);
+              },
+            );
+
+        expect(
+          resultSync.isError,
+          true,
+          reason: 'Sync chain should be error after exception in second step',
+        );
+        expect(
+          sequence,
+          [2, 3],
+          reason: 'Sync chain sequence should have first two steps (exception)',
+        );
+        expect(
+          resultSync.tryGetError(),
+          isA<DomainError>(),
+          reason: 'Sync chain error type mismatch (exception)',
+        );
+        expect(
+          resultSync.tryGetError()?.message,
+          'Simulated exception for value 3',
+          reason: 'Sync chain error message mismatch (exception)',
+        );
+        expect(
+          resultSync.tryGetError()?.code,
+          'test_error_3',
+          reason: 'Sync chain error code mismatch (exception)',
+        );
+        expect(
+          resultSync.tryGetData(),
+          null,
+          reason: 'Sync chain data should be null (exception)',
+        );
+
+        sequence.clear();
+        final resultMixed = await returnsFutureSuccess(1)
+            .runAfterAsync(
+              after: (data) async {
+                final next = data + 1;
+                sequence.add(next);
+                return returnsFutureSuccess(next);
+              },
+            )
+            .runAfter(
+              after: (data) {
+                final next = data + 1;
+                sequence.add(next);
+                return throwsException(next);
+              },
+            )
+            .runAfterAsync(
+              after: (data) async {
+                final next = data + 1;
+                sequence.add(99);
+                return returnsFutureSuccess(next);
+              },
+            );
+
+        expect(
+          resultMixed.isError,
+          true,
+          reason: 'Mixed chain should be error after exception in sync step',
+        );
+        expect(
+          sequence,
+          [2, 3],
+          reason:
+              'Mixed chain sequence should have first two steps (exception)',
+        );
+        expect(
+          resultMixed.tryGetError(),
+          isA<DomainError>(),
+          reason: 'Mixed chain error type mismatch (exception)',
+        );
+        expect(
+          resultMixed.tryGetError()?.message,
+          'Simulated exception for value 3',
+          reason: 'Mixed chain error message mismatch (exception)',
+        );
+        expect(
+          resultMixed.tryGetError()?.code,
+          'test_error_3',
+          reason: 'Mixed chain error code mismatch (exception)',
+        );
+        expect(
+          resultMixed.tryGetData(),
+          null,
+          reason: 'Mixed chain data should be null (exception)',
+        );
+      },
+    );
+  });
+
+  group('Result Chaining - Type Handling:', () {
+    test('should handle changing data types across chained runAfter calls', () {
+      final sequenceOfDataPassed = <dynamic>[];
+
+      final result = returnsStringSuccess('start')
+          .runAfter<int>(
+            after: (data) {
+              sequenceOfDataPassed.add(data);
+              final nextVal = data.length;
+              return returnsSuccess(nextVal);
+            },
+          )
+          .runAfter<String>(
+            after: (data) {
+              sequenceOfDataPassed.add(data);
+              final nextVal = data.toString();
+              return returnsStringSuccess(nextVal);
+            },
+          )
+          .runAfter<bool>(
+            after: (data) {
+              sequenceOfDataPassed.add(data);
+              final nextVal = data.isNotEmpty;
+              return Result.success(nextVal);
+            },
+          );
+
+      expect(sequenceOfDataPassed, ['start', 5, '5']);
+
+      expect(result.isSuccess, true);
+      expect(result.tryGetData(), isA<bool>());
+      expect(result.tryGetData(), true);
+    });
+  });
+}
