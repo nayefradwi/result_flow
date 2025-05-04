@@ -1,5 +1,3 @@
-import 'package:safe_result/src/lookup.dart';
-
 const String unknownErrorCode = 'UNKNOWN_ERROR';
 const String validationErrorCode = 'VALIDATION_ERROR';
 
@@ -53,19 +51,20 @@ class ValidationError extends ResultError {
     }
   }
 
+  ValidationErrorFields? getField(String field) {
+    return details[field];
+  }
+
   @override
   String toString() {
     return 'ValidationError($code): $details';
   }
 }
 
-class ValidationErrorFields with LookUpModel<String> {
+class ValidationErrorFields {
   ValidationErrorFields({required this.field, required this.message});
   factory ValidationErrorFields.fromField(String field) =>
       ValidationErrorFields(field: field, message: 'invalid $field');
   final String field;
   final String message;
-
-  @override
-  String get lookupKey => field;
 }
