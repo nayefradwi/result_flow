@@ -91,11 +91,11 @@ Use `result.on()` to provide callbacks for both success and error scenarios. Che
 ```dart
 Future<void> gambleAlittle() {
     final result = await _fetchBankAccount()
-    .runAfter((data)=> _gambleLifeSavings(data.savings))
-    .runAfterAsync((_) => await _fetchBankAccount())
-    .runAfter((data)=> _gambleLifeSavings(data.savings))
-    .runAfterAsync((_) => await _fetchBankAccount())
-    .runAfter((data)=> _gambleLifeSavings(data.savings))
+    .runAfter(after: (data)=> _gambleLifeSavings(data.savings))
+    .runAfterAsync(after: (_) async => await _fetchBankAccount())
+    .runAfter(after: (data)=> _gambleLifeSavings(data.savings))
+    .runAfterAsync(after: (_) async => await _fetchBankAccount())
+    .runAfter(after: (data)=> _gambleLifeSavings(data.savings))
 
     result.on(
         success: (data) => print(data.toString()),
