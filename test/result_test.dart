@@ -37,27 +37,21 @@ void main() {
       () {
         final sequence = <int>[];
         final result = returnsSuccess(1)
-            .runAfter(
-              after: (data) {
-                final next = data + 1;
-                sequence.add(next);
-                return returnsSuccess(next);
-              },
-            )
-            .runAfter(
-              after: (data) {
-                final next = data + 1;
-                sequence.add(next);
-                return returnsSuccess(next);
-              },
-            )
-            .runAfter(
-              after: (data) {
-                final next = data + 1;
-                sequence.add(next);
-                return returnsSuccess(next);
-              },
-            );
+            .mapTo((data) {
+              final next = data + 1;
+              sequence.add(next);
+              return returnsSuccess(next);
+            })
+            .mapTo((data) {
+              final next = data + 1;
+              sequence.add(next);
+              return returnsSuccess(next);
+            })
+            .mapTo((data) {
+              final next = data + 1;
+              sequence.add(next);
+              return returnsSuccess(next);
+            });
 
         expect(result.isSuccess, true);
         expect(result.tryGetData(), 4);
@@ -66,31 +60,25 @@ void main() {
     );
 
     test(
-      'should execute sequential asynchronous runAfterAsync calls successfully',
+      'should execute sequential asynchronous after calls successfully',
       () async {
         final sequence = <int>[];
         final result = await returnsSuccess(1)
-            .runAfterAsync(
-              after: (data) async {
-                final next = data + 1;
-                sequence.add(next);
-                return returnsFutureSuccess(next);
-              },
-            )
-            .runAfterAsync(
-              after: (data) async {
-                final next = data + 1;
-                sequence.add(next);
-                return returnsFutureSuccess(next);
-              },
-            )
-            .runAfterAsync(
-              after: (data) async {
-                final next = data + 1;
-                sequence.add(next);
-                return returnsFutureSuccess(next);
-              },
-            );
+            .continueWith((data) async {
+              final next = data + 1;
+              sequence.add(next);
+              return returnsFutureSuccess(next);
+            })
+            .continueWith((data) async {
+              final next = data + 1;
+              sequence.add(next);
+              return returnsFutureSuccess(next);
+            })
+            .continueWith((data) async {
+              final next = data + 1;
+              sequence.add(next);
+              return returnsFutureSuccess(next);
+            });
 
         expect(result.isSuccess, true);
         expect(result.tryGetData(), 4);
@@ -103,27 +91,21 @@ void main() {
       () async {
         final sequence = <int>[];
         final result = await returnsFutureSuccess(1)
-            .runAfter(
-              after: (data) {
-                final next = data + 1;
-                sequence.add(next);
-                return returnsSuccess(next);
-              },
-            )
-            .runAfterAsync(
-              after: (data) async {
-                final next = data + 1;
-                sequence.add(next);
-                return returnsFutureSuccess(next);
-              },
-            )
-            .runAfter(
-              after: (data) {
-                final next = data + 1;
-                sequence.add(next);
-                return returnsSuccess(next);
-              },
-            );
+            .mapToAsync((data) {
+              final next = data + 1;
+              sequence.add(next);
+              return returnsSuccess(next);
+            })
+            .continueWith((data) async {
+              final next = data + 1;
+              sequence.add(next);
+              return returnsFutureSuccess(next);
+            })
+            .mapToAsync((data) {
+              final next = data + 1;
+              sequence.add(next);
+              return returnsSuccess(next);
+            });
 
         expect(result.isSuccess, true);
         expect(result.tryGetData(), 4);
@@ -139,20 +121,16 @@ void main() {
         final sequence = <int>[];
 
         var resultSync = returnsSuccess(1)
-            .runAfter(
-              after: (data) {
-                final next = data + 1;
-                sequence.add(next);
-                return returnsError(next);
-              },
-            )
-            .runAfter(
-              after: (data) {
-                final next = data + 1;
-                sequence.add(99);
-                return returnsSuccess(next);
-              },
-            );
+            .mapTo((data) {
+              final next = data + 1;
+              sequence.add(next);
+              return returnsError(next);
+            })
+            .mapTo((data) {
+              final next = data + 1;
+              sequence.add(99);
+              return returnsSuccess(next);
+            });
 
         expect(
           resultSync.isError,
@@ -182,27 +160,21 @@ void main() {
 
         sequence.clear();
         resultSync = returnsSuccess(1)
-            .runAfter(
-              after: (data) {
-                final next = data + 1;
-                sequence.add(next);
-                return returnsSuccess(next);
-              },
-            )
-            .runAfter(
-              after: (data) {
-                final next = data + 1;
-                sequence.add(next);
-                return returnsError(next);
-              },
-            )
-            .runAfter(
-              after: (data) {
-                final next = data + 1;
-                sequence.add(99);
-                return returnsSuccess(next);
-              },
-            );
+            .mapTo((data) {
+              final next = data + 1;
+              sequence.add(next);
+              return returnsSuccess(next);
+            })
+            .mapTo((data) {
+              final next = data + 1;
+              sequence.add(next);
+              return returnsError(next);
+            })
+            .mapTo((data) {
+              final next = data + 1;
+              sequence.add(99);
+              return returnsSuccess(next);
+            });
 
         expect(
           resultSync.isError,
@@ -232,27 +204,21 @@ void main() {
 
         sequence.clear();
         final resultMixed = await returnsFutureSuccess(1)
-            .runAfterAsync(
-              after: (data) async {
-                final next = data + 1;
-                sequence.add(next);
-                return returnsFutureSuccess(next);
-              },
-            )
-            .runAfter(
-              after: (data) {
-                final next = data + 1;
-                sequence.add(next);
-                return returnsError(next);
-              },
-            )
-            .runAfterAsync(
-              after: (data) async {
-                final next = data + 1;
-                sequence.add(99);
-                return returnsFutureSuccess(next);
-              },
-            );
+            .continueWith((data) async {
+              final next = data + 1;
+              sequence.add(next);
+              return returnsFutureSuccess(next);
+            })
+            .mapToAsync((data) {
+              final next = data + 1;
+              sequence.add(next);
+              return returnsError(next);
+            })
+            .continueWith((data) async {
+              final next = data + 1;
+              sequence.add(99);
+              return returnsFutureSuccess(next);
+            });
 
         expect(
           resultMixed.isError,
@@ -290,20 +256,16 @@ void main() {
         final sequence = <int>[];
 
         var resultSync = returnsSuccess(1)
-            .runAfter(
-              after: (data) {
-                final next = data + 1;
-                sequence.add(next);
-                return throwsException(next);
-              },
-            )
-            .runAfter(
-              after: (data) {
-                final next = data + 1;
-                sequence.add(99);
-                return returnsSuccess(next);
-              },
-            );
+            .mapTo((data) {
+              final next = data + 1;
+              sequence.add(next);
+              return throwsException(next);
+            })
+            .mapTo((data) {
+              final next = data + 1;
+              sequence.add(99);
+              return returnsSuccess(next);
+            });
 
         expect(
           resultSync.isError,
@@ -338,27 +300,21 @@ void main() {
 
         sequence.clear();
         resultSync = returnsSuccess(1)
-            .runAfter(
-              after: (data) {
-                final next = data + 1;
-                sequence.add(next);
-                return returnsSuccess(next);
-              },
-            )
-            .runAfter(
-              after: (data) {
-                final next = data + 1;
-                sequence.add(next);
-                return throwsException(next);
-              },
-            )
-            .runAfter(
-              after: (data) {
-                final next = data + 1;
-                sequence.add(99);
-                return returnsSuccess(next);
-              },
-            );
+            .mapTo((data) {
+              final next = data + 1;
+              sequence.add(next);
+              return returnsSuccess(next);
+            })
+            .mapTo((data) {
+              final next = data + 1;
+              sequence.add(next);
+              return throwsException(next);
+            })
+            .mapTo((data) {
+              final next = data + 1;
+              sequence.add(99);
+              return returnsSuccess(next);
+            });
 
         expect(
           resultSync.isError,
@@ -393,27 +349,21 @@ void main() {
 
         sequence.clear();
         final resultMixed = await returnsFutureSuccess(1)
-            .runAfterAsync(
-              after: (data) async {
-                final next = data + 1;
-                sequence.add(next);
-                return returnsFutureSuccess(next);
-              },
-            )
-            .runAfter(
-              after: (data) {
-                final next = data + 1;
-                sequence.add(next);
-                return throwsException(next);
-              },
-            )
-            .runAfterAsync(
-              after: (data) async {
-                final next = data + 1;
-                sequence.add(99);
-                return returnsFutureSuccess(next);
-              },
-            );
+            .continueWith((data) async {
+              final next = data + 1;
+              sequence.add(next);
+              return returnsFutureSuccess(next);
+            })
+            .mapToAsync((data) {
+              final next = data + 1;
+              sequence.add(next);
+              return throwsException(next);
+            })
+            .continueWith((data) async {
+              final next = data + 1;
+              sequence.add(99);
+              return returnsFutureSuccess(next);
+            });
 
         expect(
           resultMixed.isError,
@@ -455,27 +405,21 @@ void main() {
       final sequenceOfDataPassed = <dynamic>[];
 
       final result = returnsStringSuccess('start')
-          .runAfter<int>(
-            after: (data) {
-              sequenceOfDataPassed.add(data);
-              final nextVal = data.length;
-              return returnsSuccess(nextVal);
-            },
-          )
-          .runAfter<String>(
-            after: (data) {
-              sequenceOfDataPassed.add(data);
-              final nextVal = data.toString();
-              return returnsStringSuccess(nextVal);
-            },
-          )
-          .runAfter<bool>(
-            after: (data) {
-              sequenceOfDataPassed.add(data);
-              final nextVal = data.isNotEmpty;
-              return Result.success(nextVal);
-            },
-          );
+          .mapTo<int>((data) {
+            sequenceOfDataPassed.add(data);
+            final nextVal = data.length;
+            return returnsSuccess(nextVal);
+          })
+          .mapTo<String>((data) {
+            sequenceOfDataPassed.add(data);
+            final nextVal = data.toString();
+            return returnsStringSuccess(nextVal);
+          })
+          .mapTo<bool>((data) {
+            sequenceOfDataPassed.add(data);
+            final nextVal = data.isNotEmpty;
+            return Result.success(nextVal);
+          });
 
       expect(sequenceOfDataPassed, ['start', 5, '5']);
 

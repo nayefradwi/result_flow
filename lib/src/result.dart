@@ -2,6 +2,8 @@ import 'package:safe_result/src/error.dart';
 
 typedef FutureResult<T> = Future<Result<T>>;
 typedef ResultStream<T> = Stream<Result<T>>;
+typedef ResultMapperCallback<R, T> = Result<R> Function(T data);
+typedef ResultMapperCallbackAsync<R, T> = FutureResult<R> Function(T data);
 
 abstract class Result<T> {
   Result._();
@@ -89,7 +91,7 @@ abstract class Result<T> {
     return tryGetData() ?? defaultValue;
   }
 
-  Result<R> runAfter<R>({required Result<R> Function(T data) after}) {
+  Result<R> mapTo<R>(ResultMapperCallback<R, T> after) {
     try {
       if (isError) return Result.error((this as ResultWithError<T>).error);
       final data = (this as ResultWithData<T>).data;
@@ -101,9 +103,7 @@ abstract class Result<T> {
     }
   }
 
-  FutureResult<R> runAfterAsync<R>({
-    required FutureResult<R> Function(T data) after,
-  }) async {
+  FutureResult<R> continueWith<R>(ResultMapperCallbackAsync<R, T> after) async {
     try {
       if (isError) return Result.error((this as ResultWithError<T>).error);
       final data = (this as ResultWithData<T>).data;
@@ -127,9 +127,7 @@ class ResultWithError<T> extends Result<T> {
 }
 
 extension FutureResultRunAfter<T> on FutureResult<T> {
-  FutureResult<R> runAfter<R>({
-    required Result<R> Function(T data) after,
-  }) async {
+  FutureResult<R> mapToAsync<R>(ResultMapperCallback<R, T> after) async {
     try {
       final current = await this;
       if (current.isError) {
@@ -144,9 +142,7 @@ extension FutureResultRunAfter<T> on FutureResult<T> {
     }
   }
 
-  FutureResult<R> runAfterAsync<R>({
-    required FutureResult<R> Function(T data) after,
-  }) async {
+  FutureResult<R> continueWith<R>(ResultMapperCallbackAsync<R, T> after) async {
     try {
       final current = await this;
       if (current.isError) {
