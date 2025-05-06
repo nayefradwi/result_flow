@@ -62,15 +62,11 @@ void main() async {
 
 Future<Result<User>> login(String email, String password) async {
   return validateEmail(email)
-      .runAfter(after: (_) => validatePassword(password))
-      .runAfterAsync(
-        after: (_) {
-          return Result.safeRunAsync(
-            () async => getAccessToken(email, password),
-          );
-        },
-      )
-      .runAfterAsync(after: getUser);
+      .mapTo((_) => validatePassword(password))
+      .continueWith((_) {
+        return Result.safeRunAsync(() async => getAccessToken(email, password));
+      })
+      .continueWith(getUser);
 }
 
 Result<void> validateEmail(String email) {
