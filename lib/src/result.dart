@@ -1,5 +1,5 @@
-import 'package:safe_result/src/error.dart';
-import 'package:safe_result/src/util.dart';
+import 'package:result_flow/src/error.dart';
+import 'package:result_flow/src/util.dart';
 
 typedef FutureResult<T> = Future<Result<T>>;
 typedef ResultStream<T> = Stream<Result<T>>;

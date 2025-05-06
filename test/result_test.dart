@@ -1,4 +1,4 @@
-import 'package:safe_result/safe_result.dart';
+import 'package:result_flow/result_flow.dart';
 import 'package:test/test.dart';
 
 FutureResult<int> returnsFutureSuccess(int value) async {
