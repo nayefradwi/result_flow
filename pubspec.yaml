@@ -1,7 +1,7 @@
-name: safe_result
+name: result_flow
 description: Provides a Result type (Result<T>) for robust error handling, encapsulating either a success value or an error. Includes helpers for safe execution and chaining.
 version: 1.0.0
-repository: https://github.com/nayefradwi/safe_result
+repository: https://github.com/nayefradwi/result_flow
 
 environment:
   sdk: ^3.7.2

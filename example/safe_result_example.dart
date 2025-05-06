@@ -1,6 +1,6 @@
 // ignore_for_file: avoid_print
 
-import 'package:safe_result/safe_result.dart';
+import 'package:result_flow/result_flow.dart';
 
 const validEmail = 'test@test.com';
 const validPassword = 'test1234';
