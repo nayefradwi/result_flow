@@ -54,7 +54,7 @@ void main() {
             });
 
         expect(result.isSuccess, true);
-        expect(result.tryGetData(), 4);
+        expect(result.data, 4);
         expect(sequence, [2, 3, 4]);
       },
     );
@@ -81,7 +81,7 @@ void main() {
             });
 
         expect(result.isSuccess, true);
-        expect(result.tryGetData(), 4);
+        expect(result.data, 4);
         expect(sequence, [2, 3, 4]);
       },
     );
@@ -108,7 +108,7 @@ void main() {
             });
 
         expect(result.isSuccess, true);
-        expect(result.tryGetData(), 4);
+        expect(result.data, 4);
         expect(sequence, [2, 3, 4]);
       },
     );
@@ -143,20 +143,16 @@ void main() {
           reason: '''Sync chain sequence should only have first step''',
         );
         expect(
-          resultSync.tryGetError(),
+          resultSync.error,
           isA<DomainError>(),
           reason: 'Sync chain error type mismatch',
         );
         expect(
-          (resultSync.tryGetError()! as DomainError).code,
+          (resultSync.error! as DomainError).code,
           'test_error_2',
           reason: 'Sync chain error code mismatch',
         );
-        expect(
-          resultSync.tryGetData(),
-          null,
-          reason: 'Sync chain data should be null',
-        );
+        expect(resultSync.data, null, reason: 'Sync chain data should be null');
 
         sequence.clear();
         resultSync = returnsSuccess(1)
@@ -187,20 +183,16 @@ void main() {
           reason: '''Sync chain sequence should have first two steps''',
         );
         expect(
-          resultSync.tryGetError(),
+          resultSync.error,
           isA<DomainError>(),
           reason: 'Sync chain error type mismatch',
         );
         expect(
-          (resultSync.tryGetError()! as DomainError).code,
+          (resultSync.error! as DomainError).code,
           'test_error_3',
           reason: 'Sync chain error code mismatch',
         );
-        expect(
-          resultSync.tryGetData(),
-          null,
-          reason: 'Sync chain data should be null',
-        );
+        expect(resultSync.data, null, reason: 'Sync chain data should be null');
 
         sequence.clear();
         final resultMixed = await returnsFutureSuccess(1)
@@ -231,17 +223,17 @@ void main() {
           reason: '''Mixed chain sequence should have first two steps''',
         );
         expect(
-          resultMixed.tryGetError(),
+          resultMixed.error,
           isA<DomainError>(),
           reason: 'Mixed chain error type mismatch',
         );
         expect(
-          (resultMixed.tryGetError()! as DomainError).code,
+          (resultMixed.error! as DomainError).code,
           'test_error_3',
           reason: 'Mixed chain error code mismatch',
         );
         expect(
-          resultMixed.tryGetData(),
+          resultMixed.data,
           null,
           reason: 'Mixed chain data should be null',
         );
@@ -278,22 +270,22 @@ void main() {
           reason: 'Sync chain sequence should only have first step (exception)',
         );
         expect(
-          resultSync.tryGetError(),
+          resultSync.error,
           isA<DomainError>(),
           reason: 'Sync chain error type mismatch (exception)',
         );
         expect(
-          resultSync.tryGetError()?.message,
+          resultSync.error?.message,
           'Simulated exception for value 2',
           reason: 'Sync chain error message mismatch (exception)',
         );
         expect(
-          resultSync.tryGetError()?.code,
+          resultSync.error?.code,
           'test_error_2',
           reason: 'Sync chain error code mismatch (exception)',
         );
         expect(
-          resultSync.tryGetData(),
+          resultSync.data,
           null,
           reason: 'Sync chain data should be null (exception)',
         );
@@ -327,22 +319,22 @@ void main() {
           reason: 'Sync chain sequence should have first two steps (exception)',
         );
         expect(
-          resultSync.tryGetError(),
+          resultSync.error,
           isA<DomainError>(),
           reason: 'Sync chain error type mismatch (exception)',
         );
         expect(
-          resultSync.tryGetError()?.message,
+          resultSync.error?.message,
           'Simulated exception for value 3',
           reason: 'Sync chain error message mismatch (exception)',
         );
         expect(
-          resultSync.tryGetError()?.code,
+          resultSync.error?.code,
           'test_error_3',
           reason: 'Sync chain error code mismatch (exception)',
         );
         expect(
-          resultSync.tryGetData(),
+          resultSync.data,
           null,
           reason: 'Sync chain data should be null (exception)',
         );
@@ -377,22 +369,22 @@ void main() {
               'Mixed chain sequence should have first two steps (exception)',
         );
         expect(
-          resultMixed.tryGetError(),
+          resultMixed.error,
           isA<DomainError>(),
           reason: 'Mixed chain error type mismatch (exception)',
         );
         expect(
-          resultMixed.tryGetError()?.message,
+          resultMixed.error?.message,
           'Simulated exception for value 3',
           reason: 'Mixed chain error message mismatch (exception)',
         );
         expect(
-          resultMixed.tryGetError()?.code,
+          resultMixed.error?.code,
           'test_error_3',
           reason: 'Mixed chain error code mismatch (exception)',
         );
         expect(
-          resultMixed.tryGetData(),
+          resultMixed.data,
           null,
           reason: 'Mixed chain data should be null (exception)',
         );
@@ -424,8 +416,8 @@ void main() {
       expect(sequenceOfDataPassed, ['start', 5, '5']);
 
       expect(result.isSuccess, true);
-      expect(result.tryGetData(), isA<bool>());
-      expect(result.tryGetData(), true);
+      expect(result.data, isA<bool>());
+      expect(result.data, true);
     });
   });
 }

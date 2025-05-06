@@ -49,12 +49,12 @@ void main() async {
     },
   );
 
-  final user = validUserResult.tryGetData();
+  final user = validUserResult.data;
   if (user != null) {
     print(' ✅ user(${user.email}, ${user.password})}');
   }
 
-  final invalidUser = invalidUserEmailResult.tryGetData();
+  final invalidUser = invalidUserEmailResult.data;
   if (invalidUser == null) {
     print(' ❌ cannot get user data because of result being error');
   }

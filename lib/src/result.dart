@@ -77,18 +77,23 @@ abstract class Result<T> {
     }
   }
 
-  T? tryGetData() {
+  T? get data {
     if (isSuccess) return (this as ResultWithData<T>).data;
     return null;
   }
 
-  ResultError? tryGetError() {
+  ResultError? get error {
     if (isError) return (this as ResultWithError<T>).error;
     return null;
   }
 
   T getOrElse(T defaultValue) {
-    return tryGetData() ?? defaultValue;
+    return data ?? defaultValue;
+  }
+
+  T get dataOrThrow {
+    if (isSuccess) return (this as ResultWithData<T>).data;
+    throw (this as ResultWithError<T>).error;
   }
 
   Result<R> mapTo<R>(ResultMapperCallback<R, T> after) {
@@ -118,11 +123,15 @@ abstract class Result<T> {
 
 class ResultWithData<T> extends Result<T> {
   ResultWithData._(this.data) : super._();
+
+  @override
   final T data;
 }
 
 class ResultWithError<T> extends Result<T> {
   ResultWithError._(this.error) : super._();
+
+  @override
   final ResultError error;
 }
 
