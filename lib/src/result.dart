@@ -1,3 +1,5 @@
+// ignore_for_file: only_throw_errors
+
 import 'package:safe_result/src/error.dart';
 
 typedef FutureResult<T> = Future<Result<T>>;
@@ -38,24 +40,28 @@ abstract class Result<T> {
   Future<R> onAsync<R>({
     required Future<R> Function(T data) success,
     required Future<R> Function(ResultError error) error,
+    R? fallback,
+    Future<R> Function(dynamic exception)? onException,
   }) async {
     try {
       if (!isError) return await success((this as ResultWithData<T>).data);
       return await error((this as ResultWithError<T>).error);
     } catch (e) {
-      return error(UnknownError(message: e.toString()));
+      return onException?.call(e) ?? fallback ?? (throw e);
     }
   }
 
   R on<R>({
     required R Function(T data) success,
     required R Function(ResultError error) error,
+    R? fallback,
+    R Function(dynamic exception)? onException,
   }) {
     try {
       if (!isError) return success((this as ResultWithData<T>).data);
       return error((this as ResultWithError<T>).error);
     } catch (e) {
-      return error(UnknownError(message: e.toString()));
+      return onException?.call(e) ?? fallback ?? (throw e);
     }
   }
 

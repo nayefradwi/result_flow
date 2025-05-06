@@ -420,4 +420,182 @@ void main() {
       expect(result.data, true);
     });
   });
+
+  group('Result.on - Exception in onError:', () {
+    test('should handle exceptions thrown in error handler for Result.on', () {
+      var result = returnsError(1).on<int>(
+        success: (data) {
+          fail('success callback should not be called');
+        },
+        error: (error) {
+          throw Exception('Exception from error handler');
+        },
+        fallback: 42,
+      );
+
+      expect(result, 42);
+      expect(result, isA<int>());
+
+      result = returnsError(1).on<int>(
+        success: (data) {
+          fail('success callback should not be called');
+        },
+        error: (error) {
+          throw Exception('Exception from error handler');
+        },
+        onException: (exception) {
+          expect(exception, isA<Exception>());
+          expect(
+            exception.toString(),
+            contains('Exception from error handler'),
+          );
+          return 99;
+        },
+      );
+
+      expect(result, 99);
+      expect(result, isA<int>());
+
+      result = returnsError(1).on<int>(
+        success: (data) {
+          fail('success callback should not be called');
+        },
+        error: (error) {
+          throw Exception('Exception from error handler');
+        },
+        fallback: 42,
+        onException: (exception) => 777,
+      );
+
+      expect(result, 777);
+    });
+
+    test(
+      'should handle exceptions thrown in error handler for Result.onAsync',
+      () async {
+        var result = await returnsError(1).onAsync<int>(
+          success: (data) async {
+            fail('success callback should not be called');
+          },
+          error: (error) async {
+            throw Exception('Exception from error handler');
+          },
+          fallback: 42,
+        );
+
+        expect(result, 42);
+        expect(result, isA<int>());
+
+        result = await returnsError(1).onAsync<int>(
+          success: (data) async {
+            fail('success callback should not be called');
+          },
+          error: (error) async {
+            throw Exception('Exception from error handler');
+          },
+          onException: (exception) async {
+            expect(exception, isA<Exception>());
+            expect(
+              exception.toString(),
+              contains('Exception from error handler'),
+            );
+            return 99;
+          },
+        );
+
+        expect(result, 99);
+        expect(result, isA<int>());
+
+        result = await returnsError(1).onAsync<int>(
+          success: (data) async {
+            fail('success callback should not be called');
+          },
+          error: (error) async {
+            throw Exception('Exception from error handler');
+          },
+          fallback: 42,
+          onException: (exception) async => 777,
+        );
+
+        expect(result, 777);
+      },
+    );
+
+    test(
+      '''should handle exceptions thrown in error handler for FutureResult.onAsync''',
+      () async {
+        final futureResult = returnsFutureSuccess(1).mapToAsync(returnsError);
+
+        final resultObj = await futureResult;
+        var result = await resultObj.onAsync<int>(
+          success: (data) async {
+            fail('success callback should not be called');
+          },
+          error: (error) async {
+            throw Exception('Exception from error handler');
+          },
+          fallback: 42,
+        );
+
+        expect(result, 42);
+        expect(result, isA<int>());
+
+        result = await resultObj.onAsync<int>(
+          success: (data) async {
+            fail('success callback should not be called');
+          },
+          error: (error) async {
+            throw Exception('Exception from error handler');
+          },
+          onException: (exception) async {
+            expect(exception, isA<Exception>());
+            expect(
+              exception.toString(),
+              contains('Exception from error handler'),
+            );
+            return 99;
+          },
+        );
+
+        expect(result, 99);
+        expect(result, isA<int>());
+      },
+    );
+
+    test(
+      '''should handle exceptions thrown in success handler with fallback and onException''',
+      () async {
+        var result = returnsSuccess(1).on<int>(
+          success: (data) {
+            throw Exception('Exception from success handler');
+          },
+          error: (error) {
+            fail('error callback should not be called');
+          },
+          onException: (exception) {
+            expect(exception, isA<Exception>());
+            expect(
+              exception.toString(),
+              contains('Exception from success handler'),
+            );
+            return 100;
+          },
+        );
+
+        expect(result, 100);
+
+        result = await returnsSuccess(1).onAsync<int>(
+          success: (data) async {
+            throw Exception('Exception from success handler');
+          },
+          error: (error) async {
+            fail('error callback should not be called');
+          },
+          fallback: 200,
+        );
+
+        expect(result, 200);
+      },
+    );
+  });
 }
