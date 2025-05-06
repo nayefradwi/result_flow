@@ -1,4 +1,5 @@
 import 'package:safe_result/src/error.dart';
+import 'package:safe_result/src/util.dart';
 
 typedef FutureResult<T> = Future<Result<T>>;
 typedef ResultStream<T> = Stream<Result<T>>;
@@ -38,24 +39,44 @@ abstract class Result<T> {
   Future<R> onAsync<R>({
     required Future<R> Function(T data) success,
     required Future<R> Function(ResultError error) error,
+    R? fallback,
+    Future<R> Function(dynamic exception)? onException,
   }) async {
     try {
       if (!isError) return await success((this as ResultWithData<T>).data);
       return await error((this as ResultWithError<T>).error);
-    } catch (e) {
-      return error(UnknownError(message: e.toString()));
+    } catch (err) {
+      try {
+        return await error(UnknownError(message: err.toString()));
+      } catch (e) {
+        final r = onException?.call(e);
+        if (r != null) return r;
+        if (fallback != null) return fallback;
+        if (isTypeNullable<R>()) return null as R;
+        rethrow;
+      }
     }
   }
 
   R on<R>({
     required R Function(T data) success,
     required R Function(ResultError error) error,
+    R? fallback,
+    R Function(dynamic exception)? onException,
   }) {
     try {
       if (!isError) return success((this as ResultWithData<T>).data);
       return error((this as ResultWithError<T>).error);
-    } catch (e) {
-      return error(UnknownError(message: e.toString()));
+    } catch (err) {
+      try {
+        return error(UnknownError(message: err.toString()));
+      } catch (e) {
+        final r = onException?.call(e);
+        if (r != null) return r;
+        if (fallback != null) return fallback;
+        if (isTypeNullable<R>()) return null as R;
+        rethrow;
+      }
     }
   }
 
@@ -77,18 +98,23 @@ abstract class Result<T> {
     }
   }
 
-  T? tryGetData() {
+  T? get data {
     if (isSuccess) return (this as ResultWithData<T>).data;
     return null;
   }
 
-  ResultError? tryGetError() {
+  ResultError? get error {
     if (isError) return (this as ResultWithError<T>).error;
     return null;
   }
 
   T getOrElse(T defaultValue) {
-    return tryGetData() ?? defaultValue;
+    return data ?? defaultValue;
+  }
+
+  T get dataOrThrow {
+    if (isSuccess) return (this as ResultWithData<T>).data;
+    throw (this as ResultWithError<T>).error;
   }
 
   Result<R> mapTo<R>(ResultMapperCallback<R, T> after) {
@@ -118,11 +144,15 @@ abstract class Result<T> {
 
 class ResultWithData<T> extends Result<T> {
   ResultWithData._(this.data) : super._();
+
+  @override
   final T data;
 }
 
 class ResultWithError<T> extends Result<T> {
   ResultWithError._(this.error) : super._();
+
+  @override
   final ResultError error;
 }
 
