@@ -570,15 +570,15 @@ void main() {
             throw Exception('Exception from success handler');
           },
           error: (error) {
-            fail('error callback should not be called');
-          },
-          onException: (exception) {
-            expect(exception, isA<Exception>());
+            expect(error, isA<UnknownError>());
             expect(
-              exception.toString(),
+              error.toString(),
               contains('Exception from success handler'),
             );
             return 100;
+          },
+          onException: (exception) {
+            fail('exception callback should not be called');
           },
         );
 
@@ -589,12 +589,309 @@ void main() {
             throw Exception('Exception from success handler');
           },
           error: (error) async {
-            fail('error callback should not be called');
+            expect(error, isA<UnknownError>());
+            expect(
+              error.toString(),
+              contains('Exception from success handler'),
+            );
+            return 100;
           },
           fallback: 200,
         );
 
-        expect(result, 200);
+        expect(result, 100);
+
+        result = await returnsError(1).onAsync<int>(
+          success: (data) async {
+            fail('success callback should not be called');
+          },
+          error: (error) async {
+            throw Exception('Exception from error handler');
+          },
+          fallback: 42,
+          onException: (exception) async {
+            expect(exception, isA<Exception>());
+            expect(
+              exception.toString(),
+              contains('Exception from error handler'),
+            );
+            return 99;
+          },
+        );
+        expect(result, 99);
+
+        result = await returnsError(1).onAsync<int>(
+          success: (data) async {
+            fail('success callback should not be called');
+          },
+          error: (error) async {
+            throw Exception('Exception from error handler');
+          },
+          fallback: 42,
+          onException: (exception) async => 777,
+        );
+        expect(result, 777);
+      },
+    );
+  });
+
+  group('Result.on and onAsync - Exception Handling:', () {
+    test('should handle void return type for Result.on', () {
+      final callTracker = <String>[];
+
+      returnsSuccess(42).on<void>(
+        success: (data) {
+          callTracker.add('success:$data');
+        },
+        error: (error) {
+          callTracker.add('error:${error.code}');
+          fail('Error callback should not be called for success case');
+        },
+      );
+
+      returnsError(42).on<void>(
+        success: (data) {
+          callTracker.add('success:$data');
+          fail('Success callback should not be called for error case');
+        },
+        error: (error) {
+          callTracker.add('error:${error.code}');
+        },
+      );
+
+      // Test for exception in success handler being passed to error handler
+      returnsSuccess(100).on<void>(
+        success: (data) {
+          callTracker.add('before-exception:$data');
+          throw Exception('Test exception in success handler');
+        },
+        error: (error) {
+          callTracker.add('exception-handled-by-error:${error.message}');
+          expect(error, isA<UnknownError>());
+          expect(error.message, contains('Test exception in success handler'));
+        },
+        onException: (exception) {
+          callTracker.add('should-not-reach-onException:$exception');
+          fail(
+            '''onException should not be called if error handler handles the exception''',
+          );
+        },
+      );
+
+      // Test for exception in success handler with onException
+      returnsSuccess(200).on<void>(
+        success: (data) {
+          callTracker.add('before-exception:$data');
+          throw Exception('Test exception in success handler 2');
+        },
+        error: (error) {
+          callTracker.add('error-handling-throws:${error.message}');
+          throw Exception('Error handler also throws');
+        },
+        onException: (exception) {
+          callTracker.add('caught-exception:$exception');
+        },
+      );
+
+      expect(callTracker, [
+        'success:42',
+        'error:test_error_42',
+        'before-exception:100',
+        '''exception-handled-by-error:Exception: Test exception in success handler''',
+        'before-exception:200',
+        'error-handling-throws:Exception: Test exception in success handler 2',
+        'caught-exception:Exception: Error handler also throws',
+      ]);
+    });
+
+    test('should handle void return type for Result.onAsync', () async {
+      final callTracker = <String>[];
+
+      await returnsSuccess(42).onAsync<void>(
+        success: (data) async {
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+          callTracker.add('success:$data');
+        },
+        error: (error) async {
+          callTracker.add('error:${error.code}');
+          fail('Error callback should not be called for success case');
+        },
+      );
+
+      await returnsError(42).onAsync<void>(
+        success: (data) async {
+          callTracker.add('success:$data');
+          fail('Success callback should not be called for error case');
+        },
+        error: (error) async {
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+          callTracker.add('error:${error.code}');
+        },
+      );
+
+      // Test for exception in success handler being passed to error handler
+      await returnsSuccess(100).onAsync<void>(
+        success: (data) async {
+          callTracker.add('before-exception:$data');
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+          throw Exception('Test exception in success handler');
+        },
+        error: (error) async {
+          callTracker.add('exception-handled-by-error:${error.message}');
+          expect(error, isA<UnknownError>());
+          expect(error.message, contains('Test exception in success handler'));
+        },
+        onException: (exception) async {
+          callTracker.add('should-not-reach-onException:$exception');
+          fail(
+            '''onException should not be called if error handler handles the exception''',
+          );
+        },
+      );
+
+      await returnsSuccess(150).onAsync<void>(
+        success: (data) async {
+          callTracker.add('before-exception-cascading:$data');
+          throw Exception('Test exception in success handler');
+        },
+        error: (error) async {
+          callTracker.add('error-throws-again:${error.message}');
+          throw Exception('Error handler also throws');
+        },
+        onException: (exception) async {
+          callTracker.add('caught-cascading-exception:$exception');
+        },
+      );
+
+      final futureResult = returnsFutureSuccess(200);
+      final result = await futureResult;
+      await result.onAsync<void>(
+        success: (data) async {
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+          callTracker.add('future-success:$data');
+        },
+        error: (error) async {
+          fail('Error callback should not be called for success case');
+        },
+      );
+
+      // Test for FutureResult with success throwing exception
+      await (await returnsFutureSuccess(250)).onAsync<void>(
+        success: (data) async {
+          callTracker.add('future-before-exception:$data');
+          throw Exception('Future success exception');
+        },
+        error: (error) async {
+          callTracker.add('future-exception-handled:${error.message}');
+          expect(error, isA<UnknownError>());
+          expect(error.message, contains('Future success exception'));
+        },
+      );
+
+      expect(callTracker, [
+        'success:42',
+        'error:test_error_42',
+        'before-exception:100',
+        '''exception-handled-by-error:Exception: Test exception in success handler''',
+        'before-exception-cascading:150',
+        'error-throws-again:Exception: Test exception in success handler',
+        'caught-cascading-exception:Exception: Error handler also throws',
+        'future-success:200',
+        'future-before-exception:250',
+        'future-exception-handled:Exception: Future success exception',
+      ]);
+    });
+
+    test(
+      'should handle non-void return type for Result.on when success throws',
+      () {
+        // Case 1: Success throws, error handles with correct return value
+        var result = returnsSuccess(42).on<int>(
+          success: (data) {
+            throw Exception('Exception in success handler');
+          },
+          error: (error) {
+            expect(error, isA<UnknownError>());
+            expect(error.message, contains('Exception in success handler'));
+            return 999;
+          },
+        );
+        expect(result, 999);
+
+        // Case 2: Success throws, error throws, onException handles
+        result = returnsSuccess(42).on<int>(
+          success: (data) {
+            throw Exception('First exception');
+          },
+          error: (error) {
+            throw Exception('Second exception');
+          },
+          onException: (e) {
+            expect(e.toString(), contains('Second exception'));
+            return 888;
+          },
+        );
+        expect(result, 888);
+
+        // Case 3: Success throws, error throws, fallback used
+        result = returnsSuccess(42).on<int>(
+          success: (data) {
+            throw Exception('Exception chain');
+          },
+          error: (error) {
+            throw Exception('Error handler fails too');
+          },
+          fallback: 777,
+        );
+        expect(result, 777);
+      },
+    );
+
+    test(
+      '''should handle non-void return type for Result.onAsync when success throws''',
+      () async {
+        // Case 1: Success throws, error handles with correct return value
+        var result = await returnsSuccess(42).onAsync<int>(
+          success: (data) async {
+            throw Exception('Async exception in success handler');
+          },
+          error: (error) async {
+            expect(error, isA<UnknownError>());
+            expect(
+              error.message,
+              contains('Async exception in success handler'),
+            );
+            return 999;
+          },
+        );
+        expect(result, 999);
+
+        // Case 2: Success throws, error throws, onException handles
+        result = await returnsSuccess(42).onAsync<int>(
+          success: (data) async {
+            throw Exception('First async exception');
+          },
+          error: (error) async {
+            throw Exception('Second async exception');
+          },
+          onException: (e) async {
+            expect(e.toString(), contains('Second async exception'));
+            return 888;
+          },
+        );
+        expect(result, 888);
+
+        // Case 3: Success throws, error throws, fallback used
+        result = await returnsSuccess(42).onAsync<int>(
+          success: (data) async {
+            throw Exception('Async exception chain');
+          },
+          error: (error) async {
+            throw Exception('Async error handler fails too');
+          },
+          fallback: 777,
+        );
+        expect(result, 777);
       },
     );
   });

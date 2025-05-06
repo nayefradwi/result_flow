@@ -1,6 +1,5 @@
-// ignore_for_file: only_throw_errors
-
 import 'package:safe_result/src/error.dart';
+import 'package:safe_result/src/util.dart';
 
 typedef FutureResult<T> = Future<Result<T>>;
 typedef ResultStream<T> = Stream<Result<T>>;
@@ -46,8 +45,16 @@ abstract class Result<T> {
     try {
       if (!isError) return await success((this as ResultWithData<T>).data);
       return await error((this as ResultWithError<T>).error);
-    } catch (e) {
-      return onException?.call(e) ?? fallback ?? (throw e);
+    } catch (err) {
+      try {
+        return await error(UnknownError(message: err.toString()));
+      } catch (e) {
+        final r = onException?.call(e);
+        if (r != null) return r;
+        if (fallback != null) return fallback;
+        if (isTypeNullable<R>()) return null as R;
+        rethrow;
+      }
     }
   }
 
@@ -60,8 +67,16 @@ abstract class Result<T> {
     try {
       if (!isError) return success((this as ResultWithData<T>).data);
       return error((this as ResultWithError<T>).error);
-    } catch (e) {
-      return onException?.call(e) ?? fallback ?? (throw e);
+    } catch (err) {
+      try {
+        return error(UnknownError(message: err.toString()));
+      } catch (e) {
+        final r = onException?.call(e);
+        if (r != null) return r;
+        if (fallback != null) return fallback;
+        if (isTypeNullable<R>()) return null as R;
+        rethrow;
+      }
     }
   }
 
