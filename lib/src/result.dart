@@ -140,6 +140,32 @@ abstract class Result<T> {
       return Result.exception(e);
     }
   }
+
+  Result<T> handle(Result<T> Function(ResultError error) onError) {
+    try {
+      if (isSuccess) return this;
+      final error = (this as ResultWithError<T>).error;
+      final newResult = onError(error);
+      return newResult;
+    } catch (e) {
+      if (e is ResultError) return Result.error(e);
+      return Result.exception(e);
+    }
+  }
+
+  FutureResult<T> handleAsync(
+    FutureResult<T> Function(ResultError error) onError,
+  ) async {
+    try {
+      if (isSuccess) return this;
+      final error = (this as ResultWithError<T>).error;
+      final newResult = await onError(error);
+      return newResult;
+    } catch (e) {
+      if (e is ResultError) return Result.error(e);
+      return Result.exception(e);
+    }
+  }
 }
 
 class ResultWithData<T> extends Result<T> {
@@ -180,6 +206,34 @@ extension FutureResultRunAfter<T> on FutureResult<T> {
       }
       final data = (current as ResultWithData<T>).data;
       final newResult = await after(data);
+      return newResult;
+    } catch (e) {
+      if (e is ResultError) return Result.error(e);
+      return Result.exception(e);
+    }
+  }
+
+  FutureResult<T> handleAsync(
+    FutureResult<T> Function(ResultError error) onError,
+  ) async {
+    try {
+      final current = await this;
+      if (current.isSuccess) return current;
+      final error = (current as ResultWithError<T>).error;
+      final newResult = await onError(error);
+      return newResult;
+    } catch (e) {
+      if (e is ResultError) return Result.error(e);
+      return Result.exception(e);
+    }
+  }
+
+  FutureResult<T> handle(Result<T> Function(ResultError error) onError) async {
+    try {
+      final current = await this;
+      if (current.isSuccess) return current;
+      final error = (current as ResultWithError<T>).error;
+      final newResult = onError(error);
       return newResult;
     } catch (e) {
       if (e is ResultError) return Result.error(e);
