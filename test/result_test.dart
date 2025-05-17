@@ -1,3 +1,5 @@
+// ignore_for_file: dead_code
+
 import 'package:result_flow/result_flow.dart';
 import 'package:test/test.dart';
 
@@ -892,6 +894,152 @@ void main() {
           fallback: 777,
         );
         expect(result, 777);
+      },
+    );
+  });
+
+  group('Result Chaining - Error mapping with handle and handle async', () {
+    ResultError testSpecificError(String id) =>
+        UnknownError(message: 'SpecificError: $id');
+    final ResultError originalError = UnknownError(message: 'OriginalError');
+
+    test(
+      '''Result.handle should map error to success and continue chain if initial is error''',
+      () {
+        final result = Result<int>.error(originalError)
+            .handle((error) {
+              expect(error, originalError);
+              return Result.success(100);
+            })
+            .mapTo((data) {
+              expect(data, 100);
+              return Result.success(data + 50);
+            });
+        expect(result.isSuccess, true);
+        expect(result.data, 150);
+      },
+    );
+
+    test(
+      '''Result.handle should map error to another error and stop chain if initial is error''',
+      () {
+        final newError = testSpecificError('new_handle_error');
+        final result = Result<int>.error(originalError)
+            .handle((error) {
+              expect(error, originalError);
+              return Result.error(newError);
+            })
+            .mapTo((data) {
+              fail('Chain should not continue after error');
+              return Result.success(data + 50);
+            });
+        expect(result.isError, true);
+        expect(result.error, newError);
+      },
+    );
+
+    test(
+      '''Result.handleAsync should map error to success and continue chain if initial is error''',
+      () async {
+        final result = await Result<int>.error(originalError)
+            .handleAsync((error) async {
+              expect(error, originalError);
+              return Result.success(100);
+            })
+            .continueWith((data) async {
+              expect(data, 100);
+              return Result.success(data + 50);
+            });
+        expect(result.isSuccess, true);
+        expect(result.data, 150);
+      },
+    );
+
+    test(
+      '''Result.handleAsync should map error to another error and stop chain if initial is error''',
+      () async {
+        final newError = testSpecificError('new_handle_async_error');
+        final result = await Result<int>.error(originalError)
+            .handleAsync((error) async {
+              expect(error, originalError);
+              return Result.error(newError);
+            })
+            .continueWith((data) async {
+              fail('Chain should not continue after error');
+              return Result.success(data + 50);
+            });
+        expect(result.isError, true);
+        expect(result.error, newError);
+      },
+    );
+
+    test(
+      '''FutureResult.handle should map error to success and continue chain if initial is error''',
+      () async {
+        final result = await Future.value(Result<int>.error(originalError))
+            .handle((error) {
+              expect(error, originalError);
+              return Result.success(200);
+            })
+            .mapToAsync((data) {
+              expect(data, 200);
+              return Result.success(data + 50);
+            });
+        expect(result.isSuccess, true);
+        expect(result.data, 250);
+      },
+    );
+
+    test(
+      '''FutureResult.handle should map error to another error and stop chain if initial is error''',
+      () async {
+        final newError = testSpecificError('new_future_handle_error');
+        final result = await Future.value(Result<int>.error(originalError))
+            .handle((error) {
+              expect(error, originalError);
+              return Result.error(newError);
+            })
+            .mapToAsync((data) {
+              fail('Chain should not continue after error');
+              return Result.success(data + 50);
+            });
+        expect(result.isError, true);
+        expect(result.error, newError);
+      },
+    );
+
+    test(
+      '''FutureResult.handleAsync should map error to success and continue chain if initial is error''',
+      () async {
+        final result = await Future.value(Result<int>.error(originalError))
+            .handleAsync((error) async {
+              expect(error, originalError);
+              return Result.success(300);
+            })
+            .continueWith((data) async {
+              expect(data, 300);
+              return Result.success(data + 50);
+            });
+        expect(result.isSuccess, true);
+        expect(result.data, 350);
+      },
+    );
+
+    test(
+      '''FutureResult.handleAsync should map error to another error and stop chain if initial is error''',
+      () async {
+        final newError = testSpecificError('new_future_handle_async_error');
+        final result = await Future.value(Result<int>.error(originalError))
+            .handleAsync((error) async {
+              expect(error, originalError);
+              return Result.error(newError);
+            })
+            .continueWith((data) async {
+              fail('Chain should not continue after error');
+              return Result.success(data + 50);
+            });
+        expect(result.isError, true);
+        expect(result.error, newError);
       },
     );
   });
