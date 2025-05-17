@@ -6,6 +6,12 @@ typedef ResultStream<T> = Stream<Result<T>>;
 typedef ResultMapperCallback<R, T> = Result<R> Function(T data);
 typedef ResultMapperCallbackAsync<R, T> = FutureResult<R> Function(T data);
 
+/// A class that represents the result of an operation. It can be either a
+/// success using [ResultWithData] or an error using [ResultWithError].
+///
+/// The abstract class [Result] provides a way to handle the result of one
+/// or more operations in a safe and functional way by providing methods like
+/// [on], [onAsync], [mapTo], [continueWith], and [handle].
 abstract class Result<T> {
   Result._();
   factory Result.success(T data) => ResultWithData<T>._(data);
@@ -16,6 +22,15 @@ abstract class Result<T> {
   bool get isSuccess => this is ResultWithData<T>;
   bool get isError => this is ResultWithError<T>;
 
+  /// A helper method to wraps a synchronous operation that can throw an
+  /// exception or return a result. If the operation throws an exception,
+  /// it will be caught and wrapped in a [ResultError] or [UnknownError].
+  /// If the operation returns a result, it will be wrapped in a
+  /// [ResultWithData] instance.
+  ///
+  /// This method is useful for wrapping synchronous operations that can
+  /// throw unexpected exceptions, such as parsing JSON
+  /// or performing calculations.
   static Result<T> safeRun<T>(T Function() operation) {
     try {
       final data = operation();
@@ -26,6 +41,15 @@ abstract class Result<T> {
     }
   }
 
+  /// A helper method to wraps an asynchronous operation that can throw an
+  /// exception or return a result. If the operation throws an exception,
+  /// it will be caught and wrapped in a [ResultError] or [UnknownError].
+  /// If the operation returns a result, it will be wrapped in a
+  /// [ResultWithData] instance.
+  ///
+  /// This method is useful for wrapping asynchronous operations that can
+  /// throw unexpected exceptions, such as network requests
+  /// or database queries.
   static FutureResult<T> safeRunAsync<T>(Future<T> Function() operation) async {
     try {
       final data = await operation();
@@ -36,6 +60,17 @@ abstract class Result<T> {
     }
   }
 
+  /// [onAsync] is a method that allows you to handle the result of an
+  /// asynchronous operation by providing two callbacks:
+  ///   - [success]: a callback that is called when the result is a success
+  ///   - [error]: a callback that is called when the result is an error
+  ///
+  /// [onAsync] also accepts different optional paramaters like [fallback] and
+  /// [onException] to handle cases where the result is [ResultWithError] but
+  /// the [error] callback throws an exception. It will first attempt to call
+  /// [error] with an [UnknownError] and if that throws an exception it will
+  /// call [onException] with the exception or [fallback] if provided
+  /// (prioritizing [onException] first).
   Future<R> onAsync<R>({
     required Future<R> Function(T data) success,
     required Future<R> Function(ResultError error) error,
@@ -58,6 +93,17 @@ abstract class Result<T> {
     }
   }
 
+  /// [on] is a method that allows you to handle the result of an operation
+  /// by providing two callbacks:
+  ///   - [success]: a callback that is called when the result is a success
+  ///   - [error]: a callback that is called when the result is an error
+  ///
+  /// [on] also accepts different optional paramaters like [fallback] and
+  /// [onException] to handle cases where the result is [ResultWithError] but
+  /// the [error] callback throws an exception. It will first attempt to call
+  /// [error] with an [UnknownError] and if that throws an exception it will
+  /// call [onException] with the exception or [fallback] if provided
+  /// (prioritizing [onException] first).
   R on<R>({
     required R Function(T data) success,
     required R Function(ResultError error) error,
@@ -80,6 +126,9 @@ abstract class Result<T> {
     }
   }
 
+  /// Executes the [success] callback if the result is a success.
+  /// Returns the result of the [success] callback or null if the result is
+  /// an error or an exception occurs.
   R? onSuccess<R>({required R Function(T data) success}) {
     try {
       if (isSuccess) return success((this as ResultWithData<T>).data);
@@ -89,6 +138,9 @@ abstract class Result<T> {
     }
   }
 
+  /// Executes the [error] callback if the result is an error.
+  /// Returns the result of the [error] callback or null if the result is a
+  /// success or an exception occurs.
   R? onError<R>({required R Function(ResultError error) error}) {
     try {
       if (isError) return error((this as ResultWithError<T>).error);
@@ -98,25 +150,33 @@ abstract class Result<T> {
     }
   }
 
+  /// Returns the data if the result is a success, otherwise returns null.
   T? get data {
     if (isSuccess) return (this as ResultWithData<T>).data;
     return null;
   }
 
+  /// Returns the error if the result is an error, otherwise returns null.
   ResultError? get error {
     if (isError) return (this as ResultWithError<T>).error;
     return null;
   }
 
+  /// Returns the data if the result is a success,
+  /// otherwise returns the [defaultValue].
   T getOrElse(T defaultValue) {
     return data ?? defaultValue;
   }
 
+  /// Returns the data if the result is a success, otherwise throws the error.
   T get dataOrThrow {
     if (isSuccess) return (this as ResultWithData<T>).data;
     throw (this as ResultWithError<T>).error;
   }
 
+  /// Transforms the data of a successful result using the [after] callback.
+  /// If the result is an error, or if an exception occurs in
+  /// the [after] callback, it returns a new error result.
   Result<R> mapTo<R>(ResultMapperCallback<R, T> after) {
     try {
       if (isError) return Result.error((this as ResultWithError<T>).error);
@@ -129,6 +189,9 @@ abstract class Result<T> {
     }
   }
 
+  /// Asynchronously transforms the data of a successful result using
+  /// the [after] callback. If the result is an error, or if an exception
+  /// occurs in the [after] callback, it returns a new error result.
   FutureResult<R> continueWith<R>(ResultMapperCallbackAsync<R, T> after) async {
     try {
       if (isError) return Result.error((this as ResultWithError<T>).error);
@@ -141,6 +204,10 @@ abstract class Result<T> {
     }
   }
 
+  /// Handles an error result by executing the [onError] callback.
+  /// If the result is a success, it returns the original result.
+  /// If an exception occurs in the [onError] callback,
+  /// it returns a new error result.
   Result<T> handle(Result<T> Function(ResultError error) onError) {
     try {
       if (isSuccess) return this;
@@ -153,6 +220,10 @@ abstract class Result<T> {
     }
   }
 
+  /// Asynchronously handles an error result by executing
+  /// the [onError] callback. If the result is a success, it returns
+  /// the original result. If an exception occurs in the [onError] callback,
+  /// it returns a new error result.
   FutureResult<T> handleAsync(
     FutureResult<T> Function(ResultError error) onError,
   ) async {
@@ -182,7 +253,14 @@ class ResultWithError<T> extends Result<T> {
   final ResultError error;
 }
 
+/// Extension methods for [FutureResult] to chain operations.
 extension FutureResultRunAfter<T> on FutureResult<T> {
+  /// Asynchronously transforms the data of a successful result
+  /// using the [after] callback.
+  ///
+  /// This method is intended to be used with a [FutureResult].
+  /// If the result is an error, or if an exception occurs in the [after]
+  /// callback, it returns a new error result.
   FutureResult<R> mapToAsync<R>(ResultMapperCallback<R, T> after) async {
     try {
       final current = await this;
@@ -198,6 +276,12 @@ extension FutureResultRunAfter<T> on FutureResult<T> {
     }
   }
 
+  /// Asynchronously transforms the data of a successful result
+  /// using the [after] callback.
+  ///
+  /// This method is intended to be used with a [FutureResult].
+  /// If the result is an error, or if an exception occurs in the [after]
+  /// callback, it returns a new error result.
   FutureResult<R> continueWith<R>(ResultMapperCallbackAsync<R, T> after) async {
     try {
       final current = await this;
@@ -213,6 +297,13 @@ extension FutureResultRunAfter<T> on FutureResult<T> {
     }
   }
 
+  /// Asynchronously handles an error result by executing
+  /// the [onError] callback.
+  ///
+  /// This method is intended to be used with a [FutureResult].
+  /// If the result is a success, it returns the original result.
+  /// If an exception occurs in the [onError] callback,
+  /// it returns a new error result.
   FutureResult<T> handleAsync(
     FutureResult<T> Function(ResultError error) onError,
   ) async {
@@ -228,6 +319,13 @@ extension FutureResultRunAfter<T> on FutureResult<T> {
     }
   }
 
+  /// Asynchronously handles an error result by
+  /// executing the [onError] callback.
+  ///
+  /// This method is intended to be used with a [FutureResult].
+  /// If the result is a success, it returns the original result.
+  /// If an exception occurs in the [onError] callback,
+  /// it returns a new error result.
   FutureResult<T> handle(Result<T> Function(ResultError error) onError) async {
     try {
       final current = await this;

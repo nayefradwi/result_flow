@@ -1,6 +1,14 @@
 const String unknownErrorCode = 'UNKNOWN_ERROR';
 const String validationErrorCode = 'VALIDATION_ERROR';
 
+/// Base class for all errors that allow customization either through
+/// unique error codes or by extending the base error class.
+///
+/// This class is designed to be used as a base class for all errors
+/// that can occur in the application.
+///
+/// It provides a way to represent the error message and an optional
+/// error code that can be used to identify the error type.
 abstract class ResultError extends Error {
   ResultError(this.message, {this.code});
   final String message;
@@ -12,6 +20,13 @@ abstract class ResultError extends Error {
   }
 }
 
+/// A class representing a network error.
+/// This class extends the ResultError class and provides additional
+/// functionality for handling network-related errors.
+///
+/// It includes a status code to represent the HTTP status code
+/// associated with the error, and overrides the toString method
+/// to provide a more detailed error message.
 class NetworkError extends ResultError {
   NetworkError(super.message, {super.code, this.statusCode = 0});
   final int statusCode;
@@ -22,6 +37,7 @@ class NetworkError extends ResultError {
   }
 }
 
+/// A class used as a generic error and a wrapper to uncaught exceptions.
 class UnknownError extends ResultError {
   UnknownError({
     String message = 'unknown error',
@@ -29,10 +45,18 @@ class UnknownError extends ResultError {
   }) : super(message);
 }
 
+/// A class that can be used to represent a domain specific errors like invalid
+/// internal operations or operations not following specific business rules.
 class DomainError extends ResultError {
   DomainError(super.message, {required String code}) : super(code: code);
 }
 
+/// A class representing a validation error. This class allows for form
+/// validation and provides a way to represent the details of the validation
+/// error for each field.
+///
+/// Using [ValidationErrorFields] you can add multiple fields to the error
+/// details.
 class ValidationError extends ResultError {
   ValidationError({required this.details})
     : super('invalid data', code: validationErrorCode);
@@ -61,6 +85,9 @@ class ValidationError extends ResultError {
   }
 }
 
+/// A class representing a validation error for a specific field.
+/// This class is used to represent the details of the validation error
+/// for a specific field in the form.
 class ValidationErrorFields {
   ValidationErrorFields({required this.field, required this.message});
   factory ValidationErrorFields.fromField(String field) =>
