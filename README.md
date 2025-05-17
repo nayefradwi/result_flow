@@ -90,3 +90,13 @@ Future<void> gambleAlittle() async {
     );
 }
 ```
+
+## Related Packages
+
+`result_flow` provides other packages built on top of it for different requirements like `result_flow_dio`
+that allows `dio` responses to return safe results.
+
+| Package           | Pub.dev Link                                                                                                 |
+| :---------------- | :----------------------------------------------------------------------------------------------------------- |
+| `result_flow`     | [![pub package](https://img.shields.io/pub/v/result_flow.svg)](https://pub.dev/packages/result_flow)         |
+| `result_flow_dio` | [![pub package](https://img.shields.io/pub/v/result_flow_dio.svg)](https://pub.dev/packages/result_flow_dio) |
