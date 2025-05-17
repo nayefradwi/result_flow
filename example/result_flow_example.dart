@@ -49,6 +49,18 @@ void main() async {
     },
   );
 
+  final invalidUserButMappedToValid = await login('', '')
+      .handle((err) => Result.success(User('valid email', 'valid password')))
+      .mapToAsync((data) {
+        print(' ✅ error mapped to user(${data.email}, ${data.password})}');
+        return Result.success(data);
+      });
+
+  invalidUserButMappedToValid.on(
+    success: (user) => print(' ✅ user(${user.email}, ${user.password})}'),
+    error: (_) => print(' ❌ this should not be printed'),
+  );
+
   final user = validUserResult.data;
   if (user != null) {
     print(' ✅ user(${user.email}, ${user.password})}');
@@ -57,6 +69,13 @@ void main() async {
   final invalidUser = invalidUserEmailResult.data;
   if (invalidUser == null) {
     print(' ❌ cannot get user data because of result being error');
+  }
+
+  final invalidUserButMappedToValidData = invalidUserButMappedToValid.data;
+  if (invalidUserButMappedToValidData != null) {
+    print(
+      ''' ✅ user(${invalidUserButMappedToValidData.email}, ${invalidUserButMappedToValidData.password})}''',
+    );
   }
 }
 

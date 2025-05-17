@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="result_flow API docs, for the Dart programming language.">
+  <title>result_flow - Dart API docs</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="static-assets/github.css?v1">
+  <link rel="stylesheet" href="static-assets/styles.css?v1">
+  <link rel="icon" href="static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li class="self-crumb">result_flow package</li>
+  </ol>
+  <div class="self-name">result_flow</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <div class="toggle" id="theme-button" title="Toggle brightness">
+    <label for="theme">
+      <input type="checkbox" id="theme" value="light-theme">
+      <span id="dark-theme-button" class="material-symbols-outlined">
+        dark_mode
+      </span>
+      <span id="light-theme-button" class="material-symbols-outlined">
+        light_mode
+      </span>
+    </label>
+  </div>
+</header>
+<main>
+  <div id="dartdoc-main-content" class="main-content">
+      
+<section class="desc markdown">
+  <h1 id="result_flow">result_flow</h1>
+<p><a href="https://pub.dev/packages/result_flow"><img src="https://img.shields.io/pub/v/result_flow.svg" alt="pub package"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a></p>
+<p>This package provides a Dart/Flutter implementation of the Result pattern, influenced by approaches in modern languages where errors are often treated as return values alongside success values. It introduces <code>Result&lt;T&gt;</code>, a type that encapsulates either a success value (<code>T</code>) or an error (<code>ResultError</code>), facilitating more explicit error handling and reducing the need for exceptions for expected failure paths or standard control flow.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li>✨ <strong>Explicit Outcomes:</strong> Clearly represent success (<code>Result.success&lt;T&gt;</code>) and failure (<code>Result.error&lt;E extends ResultError&gt;</code>) states, making control flow predictable and safe.</li>
+<li>🔗 <strong>Fluent Chaining:</strong> Link operations sequentially using distinctly named methods: <code>mapTo</code> for synchronous calls and <code>continueWith</code> for asynchronous calls. Errors automatically propagate, simplifying complex workflows.</li>
+<li>❓ <strong>Optional Handling:</strong> Safely access success data with the <code>data</code> getter or error details with the <code>error</code> getter. These methods return <code>null</code> if the <code>Result</code> is not in the corresponding state, integrating smoothly with nullable type handling.</li>
+<li>👐 <strong>Flexible Handling:</strong> Process the <code>Result</code> using methods like <code>on</code> (handles both success and error cases in one go), <code>onSuccess</code> (runs code only on success), <code>onError</code> (runs code only on error), and their asynchronous counterparts (<code>onAsync</code>).</li>
+<li>🧱 <strong>Extendible Errors:</strong> Define custom, specific error types by extending the base <code>ResultError</code> class, allowing for rich, domain-specific failure information (e.g., <code>NetworkError</code>, <code>ValidationError</code>).</li>
+<li>🏷️ <strong>Error Codes:</strong> <code>ResultError</code> includes an optional <code>code</code> (String) field, enabling identifier-based error handling, localization lookups, or routing to specific error recovery logic based on a unique code.</li>
+</ul>
+<h2 id="getting-started">Getting Started</h2>
+<p>To add <code>result_flow</code> to your project, run one of the following commands in your terminal:</p>
+<pre class="language-bash"><code class="language-bash"># For Flutter projects
+flutter pub add result_flow
+
+# For Dart projects
+dart pub add result_flow
+</code></pre>
+<h2 id="usage">Usage</h2>
+<p>Here are some common ways to use the result_flow package:</p>
+<ol>
+<li>Safely Execute Potentially Failing Code</li>
+</ol>
+<p>Use Result.safeRun or Result.safeRunAsync to wrap functions that might throw exceptions (like network calls or parsing). They automatically catch errors and return a Result.error.</p>
+<pre class="language-dart"><code class="language-dart">FutureResult&lt;BankAccount&gt; _fetchBankAccount() {
+    return Result.safeRunAsync(() async =&gt; await _apiCallToGetBankAccount());
+}
+</code></pre>
+<ol start="2">
+<li>Handle domain logic</li>
+</ol>
+<p>Provide error codes to trigger different custom flows like displaying unique messages or performing fallback actions</p>
+<pre class="language-dart"><code class="language-dart">Result&lt;double&gt; _gambleLifeSavings(int currentBalance) {
+    final random = Random();
+    double maxAbsoluteGamble = currentBalance &gt; 0 ? currentBalance.toDouble() : 1.0;
+    double amountToDeduct = (random.nextDouble() * 2 * maxAbsoluteGamble) - maxAbsoluteGamble;
+    double newBalance = currentBalance.toDouble() - amountToDeduct;
+
+    if(newBalance &lt; 0) {
+        return Result.error(DomainError('negative', code: 'you_lost_all_your_money'));
+    } else if(newBalance &gt; currentBalance) {
+        return Result.error(DomainError('gained money', code: 'you_gained_money_somehow'));
+    }
+
+    return Result.success(newBalance);
+}
+
+void printError(String message, {String? code}){
+    if(code == null) return print(message);
+    return switch(code) {
+        'you_gained_money_somehow' =&gt; print('congratulations!'),
+        'you_lost_all_your_money' =&gt; print('that is very sad, gambling is bad'),
+        _ =&gt; print('oops something unexpected happend'),
+    };
+}
+</code></pre>
+<ol start="3">
+<li>Chain Operations and Handle Outcomes with on</li>
+</ol>
+<p>Link multiple steps like fetching, parsing, validating stock, and calculating price. If any step returns an error, the subsequent steps are skipped.</p>
+<p>Use <code>result.on()</code> to provide callbacks for both success and error scenarios. Check the error's code for specific handling logic.</p>
+<pre class="language-dart"><code class="language-dart">Future&lt;void&gt; gambleAlittle() async {
+    final result = await _fetchBankAccount()
+    .mapToAsync((data) =&gt; _gambleLifeSavings(data.savings))
+    .continueWith((data) async =&gt; await _fetchBankAccount())
+    .mapToAsync((data) =&gt; _gambleLifeSavings(data.savings))
+    .continueWith((data) async =&gt; await _fetchBankAccount())
+    .mapToAsync((data) =&gt; _gambleLifeSavings(data.savings));
+
+    result.on(
+        success: (data) =&gt; print(data.toString()),
+        error: (error) =&gt; printError(error.message, code: error.code),
+    );
+}
+</code></pre>
+</section>
+
+
+      <section class="summary">
+          <h2>Libraries</h2>
+        <dl>
+          <dt id="result_flow">
+  <span class="name"><a href="result_flow">result_flow</a></span> 
+
+</dt>
+<dd>Result Flow is a Dart libarary that allows handling
+asynchronous and synchronous operations with a functional approach.
+</dd>
+
+        </dl>
+      </section>
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li class="self-crumb">result_flow package</li>
+</ol>
+
+    <h5 class="hidden-xs"><span class="package-name">result_flow</span> <span class="package-kind">package</span></h5>
+    <ol>
+      <li class="section-title">Libraries</li>
+      <li><a href="result_flow">result_flow</a></li>
+</ol>
+
+  </div>
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+  </div>
+</main>
+<footer>
+  <span class="no-break">
+    result_flow
+      1.1.0
+  </span>
+  
+</footer>
+
+
+<script src="static-assets/highlight.pack.js?v1"></script>
+<script src="static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

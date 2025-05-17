@@ -1,14 +1,12 @@
 name: result_flow
 description: Provides a Result type (Result<T>) for robust error handling, encapsulating either a success value or an error. Includes helpers for safe execution and chaining.
-version: 1.0.0
+version: 1.1.0
 repository: https://github.com/nayefradwi/result_flow
 
 environment:
   sdk: ^3.7.2
 
-dependencies:
-  very_good_analysis: ^7.0.0
 
 dev_dependencies:
-  lints: ^5.0.0
   test: ^1.24.0
+  very_good_analysis: ^7.0.0
