@@ -1,3 +1,9 @@
+## 1.2.0
+
+- add `DomainError.fromCode(String code)` and the same to other errors to make error creation shorter
+  syntaxically
+- updated `README.md` to include `fetch_result_bloc` to related packages
+
 ## 1.1.1
 
 - updated `README.md` to include related packages
