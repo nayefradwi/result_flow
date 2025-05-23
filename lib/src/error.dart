@@ -11,6 +11,13 @@ const String validationErrorCode = 'VALIDATION_ERROR';
 /// error code that can be used to identify the error type.
 abstract class ResultError extends Error {
   ResultError(this.message, {this.code});
+
+  /// Creates a ResultError with a specific error code.
+  /// This constructor is useful for creating errors that are
+  /// associated with a specific error code. and syntaxically shorter.
+  ResultError.fromCode(String code)
+    : this('error with code: $code', code: code);
+
   final String message;
   final String? code;
 
@@ -29,6 +36,12 @@ abstract class ResultError extends Error {
 /// to provide a more detailed error message.
 class NetworkError extends ResultError {
   NetworkError(super.message, {super.code, this.statusCode = 0});
+  NetworkError.fromCode(String code, {int statusCode = 0})
+    : this(
+        'network error with code: $code',
+        code: code,
+        statusCode: statusCode,
+      );
   final int statusCode;
 
   @override
@@ -49,6 +62,9 @@ class UnknownError extends ResultError {
 /// internal operations or operations not following specific business rules.
 class DomainError extends ResultError {
   DomainError(super.message, {required String code}) : super(code: code);
+
+  DomainError.fromCode(String code)
+    : this('domain error with code: $code', code: code);
 }
 
 /// A class representing a validation error. This class allows for form
