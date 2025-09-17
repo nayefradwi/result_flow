@@ -10,7 +10,7 @@ const String validationErrorCode = 'VALIDATION_ERROR';
 /// It provides a way to represent the error message and an optional
 /// error code that can be used to identify the error type.
 abstract class ResultError extends Error {
-  ResultError(this.message, {this.code});
+  ResultError(this.message, {this.code, this.trace});
 
   /// Creates a ResultError with a specific error code.
   /// This constructor is useful for creating errors that are
@@ -20,6 +20,7 @@ abstract class ResultError extends Error {
 
   final String message;
   final String? code;
+  final StackTrace? trace;
 
   @override
   String toString() {
@@ -53,6 +54,7 @@ class NetworkError extends ResultError {
 /// A class used as a generic error and a wrapper to uncaught exceptions.
 class UnknownError extends ResultError {
   UnknownError({
+    required super.trace,
     String message = 'unknown error',
     super.code = unknownErrorCode,
   }) : super(message);
@@ -108,6 +110,7 @@ class ValidationErrorFields {
   ValidationErrorFields({required this.field, required this.message});
   factory ValidationErrorFields.fromField(String field) =>
       ValidationErrorFields(field: field, message: 'invalid $field');
+
   final String field;
   final String message;
 }

@@ -16,8 +16,8 @@ abstract class Result<T> {
   Result._();
   factory Result.success(T data) => ResultWithData<T>._(data);
   factory Result.error(ResultError error) => ResultWithError<T>._(error);
-  factory Result.exception(dynamic e) =>
-      ResultWithError<T>._(UnknownError(message: e.toString()));
+  factory Result.exception(dynamic e, {StackTrace? trace}) =>
+      ResultWithError<T>._(UnknownError(message: e.toString(), trace: trace));
 
   bool get isSuccess => this is ResultWithData<T>;
   bool get isError => this is ResultWithError<T>;
@@ -35,9 +35,9 @@ abstract class Result<T> {
     try {
       final data = operation();
       return Result.success(data);
-    } catch (e) {
+    } catch (e, trace) {
       if (e is ResultError) return Result.error(e);
-      return Result.exception(e);
+      return Result.exception(e, trace: trace);
     }
   }
 
@@ -54,9 +54,9 @@ abstract class Result<T> {
     try {
       final data = await operation();
       return Result.success(data);
-    } catch (e) {
+    } catch (e, trace) {
       if (e is ResultError) return Result.error(e);
-      return Result.exception(e);
+      return Result.exception(e, trace: trace);
     }
   }
 
@@ -75,16 +75,16 @@ abstract class Result<T> {
     required Future<R> Function(T data) success,
     required Future<R> Function(ResultError error) error,
     R? fallback,
-    Future<R> Function(dynamic exception)? onException,
+    Future<R> Function(dynamic exception, StackTrace? trace)? onException,
   }) async {
     try {
       if (!isError) return await success((this as ResultWithData<T>).data);
       return await error((this as ResultWithError<T>).error);
-    } catch (err) {
+    } catch (err, trace) {
       try {
-        return await error(UnknownError(message: err.toString()));
-      } catch (e) {
-        final r = onException?.call(e);
+        return await error(UnknownError(message: err.toString(), trace: trace));
+      } catch (e, trace) {
+        final r = onException?.call(e, trace);
         if (r != null) return r;
         if (fallback != null) return fallback;
         if (isTypeNullable<R>()) return null as R;
@@ -108,16 +108,16 @@ abstract class Result<T> {
     required R Function(T data) success,
     required R Function(ResultError error) error,
     R? fallback,
-    R Function(dynamic exception)? onException,
+    R Function(dynamic exception, StackTrace? trace)? onException,
   }) {
     try {
       if (!isError) return success((this as ResultWithData<T>).data);
       return error((this as ResultWithError<T>).error);
-    } catch (err) {
+    } catch (err, trace) {
       try {
-        return error(UnknownError(message: err.toString()));
-      } catch (e) {
-        final r = onException?.call(e);
+        return error(UnknownError(message: err.toString(), trace: trace));
+      } catch (e, trace) {
+        final r = onException?.call(e, trace);
         if (r != null) return r;
         if (fallback != null) return fallback;
         if (isTypeNullable<R>()) return null as R;
@@ -183,9 +183,9 @@ abstract class Result<T> {
       final data = (this as ResultWithData<T>).data;
       final newResult = after(data);
       return newResult;
-    } catch (e) {
+    } catch (e, trace) {
       if (e is ResultError) return Result.error(e);
-      return Result.exception(e);
+      return Result.exception(e, trace: trace);
     }
   }
 
@@ -198,9 +198,9 @@ abstract class Result<T> {
       final data = (this as ResultWithData<T>).data;
       final newResult = await after(data);
       return newResult;
-    } catch (e) {
+    } catch (e, trace) {
       if (e is ResultError) return Result.error(e);
-      return Result.exception(e);
+      return Result.exception(e, trace: trace);
     }
   }
 
@@ -214,9 +214,9 @@ abstract class Result<T> {
       final error = (this as ResultWithError<T>).error;
       final newResult = onError(error);
       return newResult;
-    } catch (e) {
+    } catch (e, trace) {
       if (e is ResultError) return Result.error(e);
-      return Result.exception(e);
+      return Result.exception(e, trace: trace);
     }
   }
 
@@ -232,9 +232,9 @@ abstract class Result<T> {
       final error = (this as ResultWithError<T>).error;
       final newResult = await onError(error);
       return newResult;
-    } catch (e) {
+    } catch (e, trace) {
       if (e is ResultError) return Result.error(e);
-      return Result.exception(e);
+      return Result.exception(e, trace: trace);
     }
   }
 }
@@ -270,9 +270,9 @@ extension FutureResultRunAfter<T> on FutureResult<T> {
       final data = (current as ResultWithData<T>).data;
       final newResult = after(data);
       return newResult;
-    } catch (e) {
+    } catch (e, trace) {
       if (e is ResultError) return Result.error(e);
-      return Result.exception(e);
+      return Result.exception(e, trace: trace);
     }
   }
 
@@ -291,9 +291,9 @@ extension FutureResultRunAfter<T> on FutureResult<T> {
       final data = (current as ResultWithData<T>).data;
       final newResult = await after(data);
       return newResult;
-    } catch (e) {
+    } catch (e, trace) {
       if (e is ResultError) return Result.error(e);
-      return Result.exception(e);
+      return Result.exception(e, trace: trace);
     }
   }
 
@@ -313,9 +313,9 @@ extension FutureResultRunAfter<T> on FutureResult<T> {
       final error = (current as ResultWithError<T>).error;
       final newResult = await onError(error);
       return newResult;
-    } catch (e) {
+    } catch (e, trace) {
       if (e is ResultError) return Result.error(e);
-      return Result.exception(e);
+      return Result.exception(e, trace: trace);
     }
   }
 
@@ -333,9 +333,9 @@ extension FutureResultRunAfter<T> on FutureResult<T> {
       final error = (current as ResultWithError<T>).error;
       final newResult = onError(error);
       return newResult;
-    } catch (e) {
+    } catch (e, trace) {
       if (e is ResultError) return Result.error(e);
-      return Result.exception(e);
+      return Result.exception(e, trace: trace);
     }
   }
 }

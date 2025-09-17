@@ -445,12 +445,13 @@ void main() {
         error: (error) {
           throw Exception('Exception from error handler');
         },
-        onException: (exception) {
+        onException: (exception, trace) {
           expect(exception, isA<Exception>());
           expect(
             exception.toString(),
             contains('Exception from error handler'),
           );
+          expect(trace, isNotNull);
           return 99;
         },
       );
@@ -466,7 +467,7 @@ void main() {
           throw Exception('Exception from error handler');
         },
         fallback: 42,
-        onException: (exception) => 777,
+        onException: (exception, _) => 777,
       );
 
       expect(result, 777);
@@ -495,12 +496,13 @@ void main() {
           error: (error) async {
             throw Exception('Exception from error handler');
           },
-          onException: (exception) async {
+          onException: (exception, trace) async {
             expect(exception, isA<Exception>());
             expect(
               exception.toString(),
               contains('Exception from error handler'),
             );
+            expect(trace, isNotNull);
             return 99;
           },
         );
@@ -516,7 +518,7 @@ void main() {
             throw Exception('Exception from error handler');
           },
           fallback: 42,
-          onException: (exception) async => 777,
+          onException: (exception, _) async => 777,
         );
 
         expect(result, 777);
@@ -549,12 +551,13 @@ void main() {
           error: (error) async {
             throw Exception('Exception from error handler');
           },
-          onException: (exception) async {
+          onException: (exception, trace) async {
             expect(exception, isA<Exception>());
             expect(
               exception.toString(),
               contains('Exception from error handler'),
             );
+            expect(trace, isNotNull);
             return 99;
           },
         );
@@ -579,7 +582,7 @@ void main() {
             );
             return 100;
           },
-          onException: (exception) {
+          onException: (exception, _) {
             fail('exception callback should not be called');
           },
         );
@@ -611,12 +614,13 @@ void main() {
             throw Exception('Exception from error handler');
           },
           fallback: 42,
-          onException: (exception) async {
+          onException: (exception, trace) async {
             expect(exception, isA<Exception>());
             expect(
               exception.toString(),
               contains('Exception from error handler'),
             );
+            expect(trace, isNotNull);
             return 99;
           },
         );
@@ -630,7 +634,7 @@ void main() {
             throw Exception('Exception from error handler');
           },
           fallback: 42,
-          onException: (exception) async => 777,
+          onException: (exception, _) async => 777,
         );
         expect(result, 777);
       },
@@ -672,7 +676,7 @@ void main() {
           expect(error, isA<UnknownError>());
           expect(error.message, contains('Test exception in success handler'));
         },
-        onException: (exception) {
+        onException: (exception, _) {
           callTracker.add('should-not-reach-onException:$exception');
           fail(
             '''onException should not be called if error handler handles the exception''',
@@ -690,7 +694,7 @@ void main() {
           callTracker.add('error-handling-throws:${error.message}');
           throw Exception('Error handler also throws');
         },
-        onException: (exception) {
+        onException: (exception, _) {
           callTracker.add('caught-exception:$exception');
         },
       );
@@ -743,7 +747,7 @@ void main() {
           expect(error, isA<UnknownError>());
           expect(error.message, contains('Test exception in success handler'));
         },
-        onException: (exception) async {
+        onException: (exception, _) async {
           callTracker.add('should-not-reach-onException:$exception');
           fail(
             '''onException should not be called if error handler handles the exception''',
@@ -760,7 +764,7 @@ void main() {
           callTracker.add('error-throws-again:${error.message}');
           throw Exception('Error handler also throws');
         },
-        onException: (exception) async {
+        onException: (exception, _) async {
           callTracker.add('caught-cascading-exception:$exception');
         },
       );
@@ -828,7 +832,7 @@ void main() {
           error: (error) {
             throw Exception('Second exception');
           },
-          onException: (e) {
+          onException: (e, _) {
             expect(e.toString(), contains('Second exception'));
             return 888;
           },
@@ -876,8 +880,9 @@ void main() {
           error: (error) async {
             throw Exception('Second async exception');
           },
-          onException: (e) async {
+          onException: (e, stack) async {
             expect(e.toString(), contains('Second async exception'));
+            expect(stack, isNotNull);
             return 888;
           },
         );
@@ -900,8 +905,11 @@ void main() {
 
   group('Result Chaining - Error mapping with handle and handle async', () {
     ResultError testSpecificError(String id) =>
-        UnknownError(message: 'SpecificError: $id');
-    final ResultError originalError = UnknownError(message: 'OriginalError');
+        UnknownError(message: 'SpecificError: $id', trace: StackTrace.current);
+    final ResultError originalError = UnknownError(
+      message: 'OriginalError',
+      trace: StackTrace.current,
+    );
 
     test(
       '''Result.handle should map error to success and continue chain if initial is error''',
