@@ -10,7 +10,7 @@ const String validationErrorCode = 'VALIDATION_ERROR';
 /// It provides a way to represent the error message and an optional
 /// error code that can be used to identify the error type.
 abstract class ResultError extends Error {
-  ResultError(this.message, {this.code});
+  ResultError(this.message, {this.code, this.trace});
 
   /// Creates a ResultError with a specific error code.
   /// This constructor is useful for creating errors that are
@@ -20,6 +20,7 @@ abstract class ResultError extends Error {
 
   final String message;
   final String? code;
+  final StackTrace? trace;
 
   @override
   String toString() {
@@ -35,7 +36,7 @@ abstract class ResultError extends Error {
 /// associated with the error, and overrides the toString method
 /// to provide a more detailed error message.
 class NetworkError extends ResultError {
-  NetworkError(super.message, {super.code, this.statusCode = 0});
+  NetworkError(super.message, {super.code, this.statusCode = 0, super.trace});
   NetworkError.fromCode(String code, {int statusCode = 0})
     : this(
         'network error with code: $code',
@@ -53,6 +54,7 @@ class NetworkError extends ResultError {
 /// A class used as a generic error and a wrapper to uncaught exceptions.
 class UnknownError extends ResultError {
   UnknownError({
+    required super.trace,
     String message = 'unknown error',
     super.code = unknownErrorCode,
   }) : super(message);
@@ -61,10 +63,11 @@ class UnknownError extends ResultError {
 /// A class that can be used to represent a domain specific errors like invalid
 /// internal operations or operations not following specific business rules.
 class DomainError extends ResultError {
-  DomainError(super.message, {required String code}) : super(code: code);
+  DomainError(super.message, {required String code, super.trace})
+    : super(code: code);
 
-  DomainError.fromCode(String code)
-    : this('domain error with code: $code', code: code);
+  DomainError.fromCode(String code, {StackTrace? trace})
+    : this('domain error with code: $code', code: code, trace: trace);
 }
 
 /// A class representing a validation error. This class allows for form
@@ -74,10 +77,13 @@ class DomainError extends ResultError {
 /// Using [ValidationErrorFields] you can add multiple fields to the error
 /// details.
 class ValidationError extends ResultError {
-  ValidationError({required this.details})
+  ValidationError({required this.details, super.trace})
     : super('invalid data', code: validationErrorCode);
-  ValidationError.fromField(String field)
-    : this(details: {field: ValidationErrorFields.fromField(field)});
+  ValidationError.fromField(String field, {StackTrace? trace})
+    : this(
+        details: {field: ValidationErrorFields.fromField(field)},
+        trace: trace,
+      );
 
   final Map<String, ValidationErrorFields> details;
 
@@ -108,6 +114,7 @@ class ValidationErrorFields {
   ValidationErrorFields({required this.field, required this.message});
   factory ValidationErrorFields.fromField(String field) =>
       ValidationErrorFields(field: field, message: 'invalid $field');
+
   final String field;
   final String message;
 }

@@ -1,3 +1,7 @@
+## 1.3.0
+
+- added stack trace to result error
+
 ## 1.2.0
 
 - add `DomainError.fromCode(String code)` and the same to other errors to make error creation shorter
